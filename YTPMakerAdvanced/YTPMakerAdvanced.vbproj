@@ -12,7 +12,7 @@
     <OptionStrict>On</OptionStrict>
     <OptionInfer>On</OptionInfer>
     <MyType>WindowsForms</MyType>
-    <StartupObject>YTPMakerAdvanced.Program</StartupObject>
+    <StartupObject>YTPMakerAdvanced.YTPMakerAdvanced.Program</StartupObject>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
