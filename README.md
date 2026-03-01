@@ -1,39 +1,91 @@
-# YTP Maker Advanced (SharpDevelop/VB style)
+# YTP Maker Advanced (SharpDevelop / VB.NET, Legacy Windows Ready)
 
-This repository includes a longer-form **VB.NET WinForms** "YTP Maker Advanced" prototype inspired by your reference UI.
+A nostalgic **YouTube Poop generator skeleton** for older Windows systems, designed around classic YTP workflows and modernized automation hooks.
 
-## New update: Legacy Windows support profile
+## Highlights in this update
 
-This update adds an **old Windows compatibility layer** focused on:
+- Rebuilt as a modular preview for **automated and semi-automatic YTP creation**.
+- Supports retro-oriented workflows on legacy Windows environments (XP, Vista, 7, 8, 8.1 era tooling).
+- Adds a clear architecture:
+  - **Generator (FFmpeg)**: temporary clip rendering, concat pipeline, format conversion.
+  - **Exporter**: `.ytpproj` JSON project descriptor save/load.
+  - **Vegas Pro 12 adapter**: script template + keyframe instruction scaffolding.
 
-- Windows XP
-- Windows Vista
-- Windows 7
-- Windows 8
-- Windows 8.1
+## New mega feature set
 
-## What's added
+### 1) Nostalgic YTP generator modes
 
-- SharpDevelop-friendly project format retargeted to **.NET Framework 4.0** for older systems.
-- Updated startup code to legacy WinForms bootstrapping (`EnableVisualStyles` + `SetCompatibleTextRenderingDefault`).
-- Advanced generation controls for source input, clip randomization, and effect toggles.
-- **Longform Mode** up to 120 minutes.
-- **Adaptive Beat Sync** controls.
-- **FFmpeg Pipeline Features**
-  - FFmpeg path + input/output + intro/outro paths.
-  - Codec/preset selection and keyframe/shuffle controls.
-  - Audio normalization and two-pass toggle.
-  - Generated FFmpeg command preview + prototype run button.
-- **Legacy Windows output controls**
-  - Windows target profile selector.
-  - Legacy codec safety mode.
-  - Force single-thread mode for older PCs.
-  - Compatibility-focused FFmpeg flags (`yuv420p`, baseline profile rules, XP-safe codec fallback).
+- Generic
+- YTP Tennis
+- Collab Entry
+- YTPMV
+
+### 2) Source Explorer + library management
+
+- Bulk import by folder + manual multi-file import.
+- Supported source types:
+  - Video: `mp4`, `wmv`, `avi`, `mkv`
+  - Images: `png`, `jpg`, `jpeg`, `webp`, `gif`
+  - Audio: `mp3`, `wav`, `ogg`
+  - Tracker: `xm`, `mod`, `it` (best-effort)
+- Asset tagging + audio library split for YTPMV style projects.
+
+### 3) Effects framework (toggleable)
+
+Audio effect list includes nostalgic/meme-style options such as:
+`random sound`, `mute`, `speed up`, `speed down`, `reverse`, `chorus`, `vibrato`, `stutter`, `dance`, `squidward`, `sus`, `lagfun`, `low/high harmony`, `confusion`, `random chords`, `trailing reverses`, `low-quality meme`, `audio crust`, `pitch-shifting loop`, `mashup mixing`.
+
+Video effect list includes:
+`invert`, `rainbow`, `mirror`, `mirror symmetry`, `screen clip`, `overlay images/sources`, `spadinner`, `sentence mixing`, `shuffle/loop frames`, `framerate reduction`, `random cuts`, `speed loop boost`, `scrambling`.
+
+> Note: Some effects are direct FFmpeg filter mappings, while meme/composite effects are intentionally scaffolded as approximations or metadata hooks.
+
+### 4) FFmpeg pipeline + output formats
+
+- Auto-builds command pipelines from selected assets/effects.
+- Generates temporary per-clip renders, concat commands, and final conversion steps.
+- Output targets: **WMV, MP4, AVI, MKV**.
+- Exports a ready-to-run `.bat` pipeline for large remix batches.
+
+### 5) Vegas Pro 12 helper / adapter preview
+
+- Generates a Vegas script template text file.
+- Includes `AutoKeyframeData` instruction lines to assist later edit automation.
+- Shows an in-app preview of generated Vegas helper output.
+
+### 6) Project model (`.ytpproj` JSON)
+
+Serialized project data includes:
+
+- `ProjectName`
+- `Type` (Generic / YTP Tennis / Collab Entry / YTPMV)
+- `Assets` list (`Path`, `Type`, `Tag`)
+- `AudioLibrary`
+- Selected audio/video effect lists
+- Generator settings (clip pool params, seed, beat sync)
+- Output settings (format/path/temp path)
+- `AutoKeyframeData`
+
+## Project structure
+
+- `YTPMakerAdvanced/MainForm.vb` — WinForms UI + workflow wiring
+- `YTPMakerAdvanced/Models.vb` — project/domain models
+- `YTPMakerAdvanced/ProjectSerializer.vb` — JSON `.ytpproj` save/load
+- `YTPMakerAdvanced/FfmpegGenerator.vb` — FFmpeg command pipeline builder
+- `YTPMakerAdvanced/VegasAdapter.vb` — Vegas Pro 12 template/adaptor skeleton
 
 ## Opening in SharpDevelop
 
-1. Open `YTPMakerAdvanced.sln` in SharpDevelop.
+1. Open `YTPMakerAdvanced.sln`.
 2. Build the project.
-3. Run and test settings across the Windows compatibility profiles.
+3. Use tabs in order:
+   - Generator
+   - Source Explorer
+   - Vegas 12 Adapter
 
-> Note: This remains a UI + command-generation prototype and does not yet implement full timeline compositing.
+## Status
+
+This is a **preview skeleton** intentionally designed for extension:
+
+- good for large-scale remix experimentation (YTP/YTPMV/Tennis/Collab);
+- ready for deeper beat detection, advanced effect plugins, and full Vegas scripting integration.

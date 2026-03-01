@@ -42,10 +42,15 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Web.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.vb" />
     <Compile Include="MainForm.vb" />
+    <Compile Include="Models.vb" />
+    <Compile Include="ProjectSerializer.vb" />
+    <Compile Include="FfmpegGenerator.vb" />
+    <Compile Include="VegasAdapter.vb" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

@@ -1,6 +1,5 @@
 Imports System
 Imports System.Collections.Generic
-Imports System.Diagnostics
 Imports System.Drawing
 Imports System.IO
 Imports System.Linq
@@ -11,634 +10,589 @@ Namespace YTPMakerAdvanced
     Public Class MainForm
         Inherits Form
 
-        Private ReadOnly durationTrack As New TrackBar()
-        Private ReadOnly clipTrack As New TrackBar()
-        Private ReadOnly minClipTrack As New TrackBar()
-        Private ReadOnly durationLabel As New Label()
-        Private ReadOnly clipLabel As New Label()
-        Private ReadOnly minClipLabel As New Label()
+        Private _project As YtpProject
 
-        Private ReadOnly longformModeCheck As New CheckBox()
-        Private ReadOnly megaYtpCheck As New CheckBox()
-        Private ReadOnly adaptiveBeatSyncCheck As New CheckBox()
-        Private ReadOnly beatSyncStrength As New NumericUpDown()
-        Private ReadOnly cutIntensity As New ComboBox()
-
-        Private ReadOnly effectsChecked As New CheckedListBox()
-        Private ReadOnly planPreview As New TextBox()
-        Private ReadOnly ffmpegCommandPreview As New TextBox()
-
-        Private ReadOnly ffmpegEnabledCheck As New CheckBox()
+        Private ReadOnly projectNameText As New TextBox()
+        Private ReadOnly projectTypeCombo As New ComboBox()
+        Private ReadOnly outputFormatCombo As New ComboBox()
+        Private ReadOnly outputPathText As New TextBox()
         Private ReadOnly ffmpegPathText As New TextBox()
-        Private ReadOnly inputVideoText As New TextBox()
-        Private ReadOnly outputVideoText As New TextBox()
-        Private ReadOnly introClipText As New TextBox()
-        Private ReadOnly outroClipText As New TextBox()
-        Private ReadOnly codecPresetCombo As New ComboBox()
-        Private ReadOnly keyframeSeconds As New NumericUpDown()
-        Private ReadOnly shuffleSeedValue As New NumericUpDown()
-        Private ReadOnly twoPassCheck As New CheckBox()
-        Private ReadOnly normalizeAudioCheck As New CheckBox()
-        Private ReadOnly smartTransitionsCheck As New CheckBox()
 
-        Private ReadOnly windowsCompatCombo As New ComboBox()
-        Private ReadOnly legacyCodecCheck As New CheckBox()
-        Private ReadOnly forceSingleThreadCheck As New CheckBox()
+        Private ReadOnly clipCountUpDown As New NumericUpDown()
+        Private ReadOnly minClipUpDown As New NumericUpDown()
+        Private ReadOnly maxClipUpDown As New NumericUpDown()
+        Private ReadOnly beatSyncCheck As New CheckBox()
+        Private ReadOnly seedUpDown As New NumericUpDown()
+
+        Private ReadOnly audioEffects As New CheckedListBox()
+        Private ReadOnly videoEffects As New CheckedListBox()
+
+        Private ReadOnly sourceList As New ListView()
+        Private ReadOnly sourceTagText As New TextBox()
+        Private ReadOnly sourceFolderText As New TextBox()
+        Private ReadOnly audioLibraryList As New ListBox()
+
+        Private ReadOnly planPreview As New TextBox()
+        Private ReadOnly commandPreview As New TextBox()
+        Private ReadOnly vegasPreview As New TextBox()
 
         Public Sub New()
-            Text = "YTP Maker Advanced - SharpDevelop VB Edition (Legacy Windows Ready)"
-            Size = New Size(1360, 900)
+            _project = New YtpProject()
+
+            Text = "YTP Maker Advanced - Nostalgic Generator (XP to 8.1)"
+            Size = New Size(1500, 950)
             StartPosition = FormStartPosition.CenterScreen
-            BackColor = Color.FromArgb(236, 240, 246)
 
             BuildUi()
-            UpdateRangeLabels()
-            UpdatePlanPreview()
-            UpdateFfmpegPreview()
+            LoadDefaults()
+            RefreshAllViews()
         End Sub
 
         Private Sub BuildUi()
             Dim root As New TableLayoutPanel()
             root.Dock = DockStyle.Fill
-            root.ColumnCount = 3
             root.RowCount = 2
-            root.Padding = New Padding(12)
-            root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 30.0F))
-            root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 40.0F))
-            root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 30.0F))
-            root.RowStyles.Add(New RowStyle(SizeType.Percent, 70.0F))
-            root.RowStyles.Add(New RowStyle(SizeType.Percent, 30.0F))
+            root.ColumnCount = 1
+            root.RowStyles.Add(New RowStyle(SizeType.Percent, 84.0F))
+            root.RowStyles.Add(New RowStyle(SizeType.Percent, 16.0F))
             Controls.Add(root)
 
-            root.Controls.Add(BuildLeftPanel(), 0, 0)
-            root.Controls.Add(BuildCenterPanel(), 1, 0)
-            root.Controls.Add(BuildRightPanel(), 2, 0)
-            root.Controls.Add(BuildBottomPanel(), 0, 1)
-            root.SetColumnSpan(root.GetControlFromPosition(0, 1), 3)
+            Dim tabs As New TabControl()
+            tabs.Dock = DockStyle.Fill
+            tabs.TabPages.Add(BuildGeneratorTab())
+            tabs.TabPages.Add(BuildSourceExplorerTab())
+            tabs.TabPages.Add(BuildVegasTab())
+            root.Controls.Add(tabs, 0, 0)
+
+            root.Controls.Add(BuildBottomActions(), 0, 1)
         End Sub
 
-        Private Function BuildLeftPanel() As Control
-            Dim container As New GroupBox()
-            container.Dock = DockStyle.Fill
-            container.Text = "Video & Stream Settings"
-            container.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        Private Function BuildGeneratorTab() As TabPage
+            Dim page As New TabPage("Generator")
+            Dim split As New TableLayoutPanel()
+            split.Dock = DockStyle.Fill
+            split.ColumnCount = 3
+            split.RowCount = 1
+            split.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 34.0F))
+            split.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 33.0F))
+            split.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 33.0F))
+            page.Controls.Add(split)
 
-            Dim panel As New TableLayoutPanel()
-            panel.Dock = DockStyle.Fill
-            panel.ColumnCount = 1
-            panel.RowCount = 10
-            panel.Padding = New Padding(8)
-
-            Dim importVideo As New Button()
-            importVideo.Text = "Import Video (MP4/WMV/AVI/MKV)"
-            importVideo.Dock = DockStyle.Fill
-            importVideo.Height = 40
-
-            Dim importImages As New Button()
-            importImages.Text = "Import Images (PNG/JPG/BMP)"
-            importImages.Dock = DockStyle.Fill
-            importImages.Height = 40
-
-            AddHandler importVideo.Click, AddressOf SelectInputVideo
-            AddHandler importImages.Click, Sub(sender, e) MessageBox.Show("Image import hook ready.", "Import", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
-            durationTrack.Minimum = 1
-            durationTrack.Maximum = 120
-            durationTrack.Value = 25
-            durationTrack.TickFrequency = 5
-            durationTrack.Dock = DockStyle.Fill
-
-            clipTrack.Minimum = 10
-            clipTrack.Maximum = 100000
-            clipTrack.Value = 7000
-            clipTrack.TickFrequency = 2500
-            clipTrack.Dock = DockStyle.Fill
-
-            minClipTrack.Minimum = 1
-            minClipTrack.Maximum = 180
-            minClipTrack.Value = 8
-            minClipTrack.TickFrequency = 10
-            minClipTrack.Dock = DockStyle.Fill
-
-            AddHandler durationTrack.ValueChanged, AddressOf OnParameterChanged
-            AddHandler clipTrack.ValueChanged, AddressOf OnParameterChanged
-            AddHandler minClipTrack.ValueChanged, AddressOf OnParameterChanged
-
-            panel.Controls.Add(importVideo)
-            panel.Controls.Add(importImages)
-            panel.Controls.Add(durationLabel)
-            panel.Controls.Add(durationTrack)
-            panel.Controls.Add(clipLabel)
-            panel.Controls.Add(clipTrack)
-            panel.Controls.Add(minClipLabel)
-            panel.Controls.Add(minClipTrack)
-
-            longformModeCheck.Text = "Longform Mode: 25 to 120 minutes"
-            longformModeCheck.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            AddHandler longformModeCheck.CheckedChanged, AddressOf OnLongformModeChanged
-            panel.Controls.Add(longformModeCheck)
-
-            container.Controls.Add(panel)
-            Return container
+            split.Controls.Add(BuildProjectSettingsPanel(), 0, 0)
+            split.Controls.Add(BuildEffectsPanel(), 1, 0)
+            split.Controls.Add(BuildPreviewPanel(), 2, 0)
+            Return page
         End Function
 
-        Private Function BuildCenterPanel() As Control
-            Dim container As New GroupBox()
-            container.Dock = DockStyle.Fill
-            container.Text = "Preview / Generation Plan"
-            container.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        Private Function BuildProjectSettingsPanel() As Control
+            Dim box As New GroupBox()
+            box.Text = "Project / Render Settings"
+            box.Dock = DockStyle.Fill
 
-            Dim panel As New TableLayoutPanel()
-            panel.Dock = DockStyle.Fill
-            panel.ColumnCount = 1
-            panel.RowCount = 5
-            panel.Padding = New Padding(8)
-            panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 260))
-            panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 24))
-            panel.RowStyles.Add(New RowStyle(SizeType.Percent, 50))
-            panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 24))
-            panel.RowStyles.Add(New RowStyle(SizeType.Percent, 50))
+            Dim p As New TableLayoutPanel()
+            p.Dock = DockStyle.Fill
+            p.ColumnCount = 1
+            p.AutoScroll = True
+            p.Padding = New Padding(8)
 
-            Dim preview As New Panel()
-            preview.Dock = DockStyle.Fill
-            preview.BackColor = Color.Black
+            projectTypeCombo.DropDownStyle = ComboBoxStyle.DropDownList
+            projectTypeCombo.Items.AddRange(New Object() {"Generic", "YTP Tennis", "Collab Entry", "YTPMV"})
 
-            Dim previewLabel As New Label()
-            previewLabel.Dock = DockStyle.Fill
-            previewLabel.Text = "Preview Placeholder (render engine hook)"
-            previewLabel.ForeColor = Color.White
-            previewLabel.TextAlign = ContentAlignment.MiddleCenter
-            preview.Controls.Add(previewLabel)
+            outputFormatCombo.DropDownStyle = ComboBoxStyle.DropDownList
+            outputFormatCombo.Items.AddRange(New Object() {"MP4", "WMV", "AVI", "MKV"})
 
-            Dim planTitle As New Label()
-            planTitle.Text = "Generation Plan"
-            planTitle.Dock = DockStyle.Fill
-            planTitle.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+            clipCountUpDown.Minimum = 10
+            clipCountUpDown.Maximum = 10000
+            minClipUpDown.Minimum = 1
+            minClipUpDown.Maximum = 120
+            maxClipUpDown.Minimum = 2
+            maxClipUpDown.Maximum = 180
+            seedUpDown.Minimum = 1
+            seedUpDown.Maximum = 999999
 
-            planPreview.Multiline = True
-            planPreview.ScrollBars = ScrollBars.Vertical
-            planPreview.ReadOnly = True
-            planPreview.Dock = DockStyle.Fill
-            planPreview.Font = New Font("Consolas", 10)
-
-            Dim ffmpegTitle As New Label()
-            ffmpegTitle.Text = "Generated FFmpeg Command"
-            ffmpegTitle.Dock = DockStyle.Fill
-            ffmpegTitle.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-
-            ffmpegCommandPreview.Multiline = True
-            ffmpegCommandPreview.ScrollBars = ScrollBars.Vertical
-            ffmpegCommandPreview.ReadOnly = True
-            ffmpegCommandPreview.Dock = DockStyle.Fill
-            ffmpegCommandPreview.Font = New Font("Consolas", 9)
-
-            panel.Controls.Add(preview)
-            panel.Controls.Add(planTitle)
-            panel.Controls.Add(planPreview)
-            panel.Controls.Add(ffmpegTitle)
-            panel.Controls.Add(ffmpegCommandPreview)
-            container.Controls.Add(panel)
-
-            Return container
-        End Function
-
-        Private Function BuildRightPanel() As Control
-            Dim container As New GroupBox()
-            container.Dock = DockStyle.Fill
-            container.Text = "Advanced + FFmpeg + Legacy Windows"
-            container.Font = New Font("Segoe UI", 11, FontStyle.Bold)
-
-            Dim panel As New TableLayoutPanel()
-            panel.Dock = DockStyle.Fill
-            panel.ColumnCount = 1
-            panel.Padding = New Padding(8)
-            panel.AutoScroll = True
-
-            megaYtpCheck.Text = "Mega YTP Mode"
-            megaYtpCheck.Checked = True
-
-            adaptiveBeatSyncCheck.Text = "Adaptive Beat Sync"
-            adaptiveBeatSyncCheck.Checked = True
-
-            Dim beatStrengthLabel As New Label()
-            beatStrengthLabel.Text = "Beat Sync Strength (1-10):"
-            beatStrengthLabel.AutoSize = True
-            beatSyncStrength.Minimum = 1
-            beatSyncStrength.Maximum = 10
-            beatSyncStrength.Value = 7
-
-            Dim cutLabel As New Label()
-            cutLabel.Text = "Cut Intensity:"
-            cutLabel.AutoSize = True
-            cutIntensity.DropDownStyle = ComboBoxStyle.DropDownList
-            cutIntensity.Items.AddRange(New Object() {"Balanced", "Chaotic", "Ultra-chaotic", "Story-biased"})
-            cutIntensity.SelectedIndex = 0
-
-            effectsChecked.CheckOnClick = True
-            effectsChecked.Items.AddRange(New Object() {
-                "Random Sound", "Mute", "Speed Up", "Reverse", "Chorus", "Lagfun",
-                "Low Harmony", "Audio Crust", "Pitch Shift", "Scrambling",
-                "Invert", "Rainbow", "Mirror", "Spadinner Mix", "Frame Rate Cuts"
-            })
-            effectsChecked.Height = 220
-            effectsChecked.Dock = DockStyle.Fill
-
-            ffmpegEnabledCheck.Text = "Enable FFmpeg Render Pipeline"
-            ffmpegEnabledCheck.Checked = True
+            beatSyncCheck.Text = "Beat Sync (for YTPMV/Tennis)"
 
             ffmpegPathText.Text = "ffmpeg"
-            outputVideoText.Text = "output_ytp.mp4"
 
-            codecPresetCombo.DropDownStyle = ComboBoxStyle.DropDownList
-            codecPresetCombo.Items.AddRange(New Object() {
-                "libx264 veryfast", "libx264 medium", "libx265 medium", "mpeg4 fast"
-            })
-            codecPresetCombo.SelectedIndex = 0
+            p.Controls.Add(New Label() With {.Text = "Project Name", .AutoSize = True})
+            p.Controls.Add(projectNameText)
+            p.Controls.Add(New Label() With {.Text = "Project Type", .AutoSize = True})
+            p.Controls.Add(projectTypeCombo)
+            p.Controls.Add(New Label() With {.Text = "Clip Count", .AutoSize = True})
+            p.Controls.Add(clipCountUpDown)
+            p.Controls.Add(New Label() With {.Text = "Min Clip Seconds", .AutoSize = True})
+            p.Controls.Add(minClipUpDown)
+            p.Controls.Add(New Label() With {.Text = "Max Clip Seconds", .AutoSize = True})
+            p.Controls.Add(maxClipUpDown)
+            p.Controls.Add(beatSyncCheck)
+            p.Controls.Add(New Label() With {.Text = "Shuffle Seed", .AutoSize = True})
+            p.Controls.Add(seedUpDown)
+            p.Controls.Add(New Label() With {.Text = "Output Format", .AutoSize = True})
+            p.Controls.Add(outputFormatCombo)
+            p.Controls.Add(New Label() With {.Text = "Output Path", .AutoSize = True})
+            p.Controls.Add(outputPathText)
+            p.Controls.Add(New Label() With {.Text = "FFmpeg Path", .AutoSize = True})
+            p.Controls.Add(ffmpegPathText)
 
-            windowsCompatCombo.DropDownStyle = ComboBoxStyle.DropDownList
-            windowsCompatCombo.Items.AddRange(New Object() {
-                "Auto (Modern)", "Windows XP", "Windows Vista", "Windows 7", "Windows 8", "Windows 8.1"
-            })
-            windowsCompatCombo.SelectedIndex = 0
-
-            keyframeSeconds.Minimum = 1
-            keyframeSeconds.Maximum = 10
-            keyframeSeconds.Value = 2
-
-            shuffleSeedValue.Minimum = 1
-            shuffleSeedValue.Maximum = 999999
-            shuffleSeedValue.Value = 1337
-
-            twoPassCheck.Text = "Enable Two-Pass"
-            normalizeAudioCheck.Text = "Normalize Audio (loudnorm)"
-            smartTransitionsCheck.Text = "Smart Transition Mix"
-            smartTransitionsCheck.Checked = True
-
-            legacyCodecCheck.Text = "Legacy Playback Safe Codec"
-            forceSingleThreadCheck.Text = "Force Single Thread (Old PC Safe)"
-
-            AddHandler megaYtpCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler adaptiveBeatSyncCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler beatSyncStrength.ValueChanged, AddressOf OnParameterChanged
-            AddHandler cutIntensity.SelectedIndexChanged, AddressOf OnParameterChanged
-            AddHandler effectsChecked.ItemCheck, AddressOf OnEffectsChanged
-
-            AddHandler ffmpegEnabledCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler ffmpegPathText.TextChanged, AddressOf OnParameterChanged
-            AddHandler inputVideoText.TextChanged, AddressOf OnParameterChanged
-            AddHandler outputVideoText.TextChanged, AddressOf OnParameterChanged
-            AddHandler introClipText.TextChanged, AddressOf OnParameterChanged
-            AddHandler outroClipText.TextChanged, AddressOf OnParameterChanged
-            AddHandler codecPresetCombo.SelectedIndexChanged, AddressOf OnParameterChanged
-            AddHandler windowsCompatCombo.SelectedIndexChanged, AddressOf OnParameterChanged
-            AddHandler keyframeSeconds.ValueChanged, AddressOf OnParameterChanged
-            AddHandler shuffleSeedValue.ValueChanged, AddressOf OnParameterChanged
-            AddHandler twoPassCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler normalizeAudioCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler smartTransitionsCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler legacyCodecCheck.CheckedChanged, AddressOf OnParameterChanged
-            AddHandler forceSingleThreadCheck.CheckedChanged, AddressOf OnParameterChanged
-
-            panel.Controls.Add(megaYtpCheck)
-            panel.Controls.Add(adaptiveBeatSyncCheck)
-            panel.Controls.Add(beatStrengthLabel)
-            panel.Controls.Add(beatSyncStrength)
-            panel.Controls.Add(cutLabel)
-            panel.Controls.Add(cutIntensity)
-            panel.Controls.Add(New Label() With {.Text = "Effects:", .AutoSize = True})
-            panel.Controls.Add(effectsChecked)
-
-            panel.Controls.Add(New Label() With {.Text = "Windows target profile:", .AutoSize = True})
-            panel.Controls.Add(windowsCompatCombo)
-            panel.Controls.Add(legacyCodecCheck)
-            panel.Controls.Add(forceSingleThreadCheck)
-
-            panel.Controls.Add(ffmpegEnabledCheck)
-            panel.Controls.Add(New Label() With {.Text = "FFmpeg executable:", .AutoSize = True})
-            panel.Controls.Add(ffmpegPathText)
-            panel.Controls.Add(New Label() With {.Text = "Input video path:", .AutoSize = True})
-            panel.Controls.Add(inputVideoText)
-            panel.Controls.Add(New Label() With {.Text = "Output video path:", .AutoSize = True})
-            panel.Controls.Add(outputVideoText)
-            panel.Controls.Add(New Label() With {.Text = "Intro clip path (optional):", .AutoSize = True})
-            panel.Controls.Add(introClipText)
-            panel.Controls.Add(New Label() With {.Text = "Outro clip path (optional):", .AutoSize = True})
-            panel.Controls.Add(outroClipText)
-            panel.Controls.Add(New Label() With {.Text = "Video codec preset:", .AutoSize = True})
-            panel.Controls.Add(codecPresetCombo)
-            panel.Controls.Add(New Label() With {.Text = "Keyframe every (seconds):", .AutoSize = True})
-            panel.Controls.Add(keyframeSeconds)
-            panel.Controls.Add(New Label() With {.Text = "Shuffle seed:", .AutoSize = True})
-            panel.Controls.Add(shuffleSeedValue)
-            panel.Controls.Add(twoPassCheck)
-            panel.Controls.Add(normalizeAudioCheck)
-            panel.Controls.Add(smartTransitionsCheck)
-
-            container.Controls.Add(panel)
-            Return container
-        End Function
-
-        Private Function BuildBottomPanel() As Control
-            Dim panel As New FlowLayoutPanel()
-            panel.Dock = DockStyle.Fill
-            panel.FlowDirection = FlowDirection.LeftToRight
-            panel.Padding = New Padding(8)
-
-            Dim quickButtons As String() = {
-                "Add Intro/Outro", "Overlay Memes", "Clip Settings", "Save Template", "Export Video"
-            }
-
-            For Each buttonText As String In quickButtons
-                Dim btn As New Button()
-                btn.Text = buttonText
-                btn.Width = 165
-                btn.Height = 48
-                btn.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-                AddHandler btn.Click,
-                    Sub(sender, e)
-                        MessageBox.Show(String.Format("'{0}' workflow hook is ready.", buttonText), "Feature", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                    End Sub
-                panel.Controls.Add(btn)
+            Dim handlers As Control() = {projectNameText, outputPathText, ffmpegPathText, projectTypeCombo, outputFormatCombo, clipCountUpDown, minClipUpDown, maxClipUpDown, seedUpDown, beatSyncCheck}
+            For Each c As Control In handlers
+                AddHandlerByType(c)
             Next
 
-            Dim generateCommandButton As New Button()
-            generateCommandButton.Text = "Generate FFmpeg Cmd"
-            generateCommandButton.Width = 185
-            generateCommandButton.Height = 48
-            generateCommandButton.BackColor = Color.DodgerBlue
-            generateCommandButton.ForeColor = Color.White
-            generateCommandButton.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            AddHandler generateCommandButton.Click,
-                Sub(sender, e)
-                    UpdateFfmpegPreview()
-                    MessageBox.Show("FFmpeg command regenerated.", "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                End Sub
-            panel.Controls.Add(generateCommandButton)
+            box.Controls.Add(p)
+            Return box
+        End Function
 
-            Dim runFfmpegButton As New Button()
-            runFfmpegButton.Text = "Run FFmpeg (Prototype)"
-            runFfmpegButton.Width = 205
-            runFfmpegButton.Height = 48
-            runFfmpegButton.BackColor = Color.DarkSlateBlue
-            runFfmpegButton.ForeColor = Color.White
-            runFfmpegButton.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            AddHandler runFfmpegButton.Click, AddressOf RunFfmpegPrototype
-            panel.Controls.Add(runFfmpegButton)
+        Private Function BuildEffectsPanel() As Control
+            Dim box As New GroupBox()
+            box.Text = "Nostalgic YTP Effects"
+            box.Dock = DockStyle.Fill
 
-            Dim startButton As New Button()
-            startButton.Text = "Start Generation!"
-            startButton.Width = 220
-            startButton.Height = 48
-            startButton.BackColor = Color.ForestGreen
-            startButton.ForeColor = Color.White
-            startButton.Font = New Font("Segoe UI", 11, FontStyle.Bold)
-            AddHandler startButton.Click,
+            Dim p As New TableLayoutPanel()
+            p.Dock = DockStyle.Fill
+            p.ColumnCount = 1
+            p.RowCount = 4
+            p.RowStyles.Add(New RowStyle(SizeType.Absolute, 24))
+            p.RowStyles.Add(New RowStyle(SizeType.Percent, 50.0F))
+            p.RowStyles.Add(New RowStyle(SizeType.Absolute, 24))
+            p.RowStyles.Add(New RowStyle(SizeType.Percent, 50.0F))
+
+            audioEffects.CheckOnClick = True
+            audioEffects.Items.AddRange(New Object() {
+                "random sound", "mute", "speed up", "speed down", "reverse", "chorus", "vibrato", "stutter", "dance", "squidward", "sus", "lagfun", "low harmony", "high harmony", "confusion", "random chords", "trailing reverses", "low-quality meme", "audio crust", "pitch-shifting loop", "mashup mixing"
+            })
+            videoEffects.CheckOnClick = True
+            videoEffects.Items.AddRange(New Object() {
+                "invert", "rainbow", "mirror", "mirror symmetry", "screen clip", "overlay images/sources", "spadinner", "sentence mixing", "shuffle/loop frames", "framerate reduction", "random cuts", "speed loop boost", "scrambling"
+            })
+
+            AddHandler audioEffects.ItemCheck, AddressOf OnEffectsChanged
+            AddHandler videoEffects.ItemCheck, AddressOf OnEffectsChanged
+
+            p.Controls.Add(New Label() With {.Text = "Audio Effects", .AutoSize = True}, 0, 0)
+            p.Controls.Add(audioEffects, 0, 1)
+            p.Controls.Add(New Label() With {.Text = "Video Effects", .AutoSize = True}, 0, 2)
+            p.Controls.Add(videoEffects, 0, 3)
+
+            box.Controls.Add(p)
+            Return box
+        End Function
+
+        Private Function BuildPreviewPanel() As Control
+            Dim box As New GroupBox()
+            box.Text = "Plan + FFmpeg Command"
+            box.Dock = DockStyle.Fill
+
+            Dim p As New TableLayoutPanel()
+            p.Dock = DockStyle.Fill
+            p.ColumnCount = 1
+            p.RowCount = 4
+            p.RowStyles.Add(New RowStyle(SizeType.Absolute, 22))
+            p.RowStyles.Add(New RowStyle(SizeType.Percent, 42.0F))
+            p.RowStyles.Add(New RowStyle(SizeType.Absolute, 22))
+            p.RowStyles.Add(New RowStyle(SizeType.Percent, 58.0F))
+
+            planPreview.Multiline = True
+            planPreview.Dock = DockStyle.Fill
+            planPreview.ScrollBars = ScrollBars.Vertical
+            planPreview.ReadOnly = True
+            planPreview.Font = New Font("Consolas", 9.5F)
+
+            commandPreview.Multiline = True
+            commandPreview.Dock = DockStyle.Fill
+            commandPreview.ScrollBars = ScrollBars.Vertical
+            commandPreview.ReadOnly = True
+            commandPreview.Font = New Font("Consolas", 8.5F)
+
+            p.Controls.Add(New Label() With {.Text = "Generation Plan", .AutoSize = True}, 0, 0)
+            p.Controls.Add(planPreview, 0, 1)
+            p.Controls.Add(New Label() With {.Text = "FFmpeg Pipeline Preview", .AutoSize = True}, 0, 2)
+            p.Controls.Add(commandPreview, 0, 3)
+
+            box.Controls.Add(p)
+            Return box
+        End Function
+
+        Private Function BuildSourceExplorerTab() As TabPage
+            Dim page As New TabPage("Source Explorer")
+            Dim split As New TableLayoutPanel()
+            split.Dock = DockStyle.Fill
+            split.ColumnCount = 2
+            split.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 65.0F))
+            split.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 35.0F))
+            page.Controls.Add(split)
+
+            sourceList.Dock = DockStyle.Fill
+            sourceList.View = View.Details
+            sourceList.Columns.Add("Path", 520)
+            sourceList.Columns.Add("Type", 90)
+            sourceList.Columns.Add("Tag", 120)
+            sourceList.FullRowSelect = True
+
+            Dim leftPanel As New TableLayoutPanel()
+            leftPanel.Dock = DockStyle.Fill
+            leftPanel.RowCount = 3
+            leftPanel.RowStyles.Add(New RowStyle(SizeType.Absolute, 28))
+            leftPanel.RowStyles.Add(New RowStyle(SizeType.Absolute, 28))
+            leftPanel.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0F))
+
+            leftPanel.Controls.Add(sourceFolderText, 0, 0)
+            Dim browseBtn As New Button() With {.Text = "Browse Folder + Bulk Add"}
+            AddHandler browseBtn.Click, AddressOf BrowseAndBulkAdd
+            leftPanel.Controls.Add(browseBtn, 0, 1)
+            leftPanel.Controls.Add(sourceList, 0, 2)
+
+            Dim rightPanel As New TableLayoutPanel()
+            rightPanel.Dock = DockStyle.Fill
+            rightPanel.RowCount = 10
+
+            rightPanel.Controls.Add(New Label() With {.Text = "Tag selected assets", .AutoSize = True})
+            rightPanel.Controls.Add(sourceTagText)
+            Dim tagBtn As New Button() With {.Text = "Apply Tag"}
+            AddHandler tagBtn.Click, AddressOf ApplyTagToSelected
+            rightPanel.Controls.Add(tagBtn)
+
+            Dim addAudioBtn As New Button() With {.Text = "Add Selected to Audio Library"}
+            AddHandler addAudioBtn.Click, AddressOf AddSelectedToAudioLibrary
+            rightPanel.Controls.Add(addAudioBtn)
+
+            rightPanel.Controls.Add(New Label() With {.Text = "Audio Library (YTPMV)", .AutoSize = True})
+            audioLibraryList.Dock = DockStyle.Fill
+            rightPanel.Controls.Add(audioLibraryList)
+
+            Dim addFileBtn As New Button() With {.Text = "Add Files (Manual)"}
+            AddHandler addFileBtn.Click, AddressOf AddFilesManual
+            rightPanel.Controls.Add(addFileBtn)
+
+            Dim clearBtn As New Button() With {.Text = "Clear Source Library"}
+            AddHandler clearBtn.Click,
                 Sub(sender, e)
-                    UpdatePlanPreview()
-                    UpdateFfmpegPreview()
-                    MessageBox.Show("Generation has started based on the current plan.", "YTP Maker Advanced", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    _project.Assets.Clear()
+                    _project.AudioLibrary.Clear()
+                    RefreshAllViews()
                 End Sub
-            panel.Controls.Add(startButton)
+            rightPanel.Controls.Add(clearBtn)
+
+            split.Controls.Add(leftPanel, 0, 0)
+            split.Controls.Add(rightPanel, 1, 0)
+            Return page
+        End Function
+
+        Private Function BuildVegasTab() As TabPage
+            Dim page As New TabPage("Vegas 12 Adapter")
+            Dim p As New TableLayoutPanel()
+            p.Dock = DockStyle.Fill
+            p.RowCount = 3
+            p.RowStyles.Add(New RowStyle(SizeType.Absolute, 42))
+            p.RowStyles.Add(New RowStyle(SizeType.Absolute, 42))
+            p.RowStyles.Add(New RowStyle(SizeType.Percent, 100.0F))
+
+            Dim btn1 As New Button() With {.Text = "Generate Vegas Script Template (.txt)"}
+            AddHandler btn1.Click, AddressOf ExportVegasTemplate
+            p.Controls.Add(btn1, 0, 0)
+
+            Dim btn2 As New Button() With {.Text = "Generate .ytpproj JSON"}
+            AddHandler btn2.Click, AddressOf SaveProjectJson
+            p.Controls.Add(btn2, 0, 1)
+
+            vegasPreview.Multiline = True
+            vegasPreview.ScrollBars = ScrollBars.Vertical
+            vegasPreview.Dock = DockStyle.Fill
+            vegasPreview.ReadOnly = True
+            vegasPreview.Font = New Font("Consolas", 9.0F)
+            p.Controls.Add(vegasPreview, 0, 2)
+
+            page.Controls.Add(p)
+            Return page
+        End Function
+
+        Private Function BuildBottomActions() As Control
+            Dim panel As New FlowLayoutPanel()
+            panel.Dock = DockStyle.Fill
+
+            Dim saveBtn As New Button() With {.Text = "Save .ytpproj", .Width = 140, .Height = 36}
+            AddHandler saveBtn.Click, AddressOf SaveProjectJson
+            panel.Controls.Add(saveBtn)
+
+            Dim loadBtn As New Button() With {.Text = "Load .ytpproj", .Width = 140, .Height = 36}
+            AddHandler loadBtn.Click, AddressOf LoadProjectJson
+            panel.Controls.Add(loadBtn)
+
+            Dim exportBatBtn As New Button() With {.Text = "Export FFmpeg .bat", .Width = 160, .Height = 36}
+            AddHandler exportBatBtn.Click, AddressOf ExportPipelineBat
+            panel.Controls.Add(exportBatBtn)
+
+            Dim refreshBtn As New Button() With {.Text = "Refresh Preview", .Width = 140, .Height = 36}
+            AddHandler refreshBtn.Click, Sub(sender, e) RefreshAllViews()
+            panel.Controls.Add(refreshBtn)
+
+            Dim skeletonLbl As New Label() With {.Text = "Ready skeleton for automated + semi-automatic YTP/YTPMV/Tennis/Collab workflows", .AutoSize = True, .Padding = New Padding(18, 10, 0, 0)}
+            panel.Controls.Add(skeletonLbl)
 
             Return panel
         End Function
 
-        Private Sub SelectInputVideo(sender As Object, e As EventArgs)
-            Using dialog As New OpenFileDialog()
-                dialog.Filter = "Video Files|*.mp4;*.wmv;*.avi;*.mkv|All Files|*.*"
-                dialog.Title = "Select source video"
-                If dialog.ShowDialog() = DialogResult.OK Then
-                    inputVideoText.Text = dialog.FileName
-                    If String.IsNullOrWhiteSpace(outputVideoText.Text) Then
-                        outputVideoText.Text = Path.Combine(Path.GetDirectoryName(dialog.FileName), "ytp_output.mp4")
-                    End If
+        Private Sub LoadDefaults()
+            projectNameText.Text = _project.ProjectName
+            projectTypeCombo.SelectedIndex = 0
+            outputFormatCombo.SelectedIndex = 0
+            outputPathText.Text = _project.Output.OutputPath
+            clipCountUpDown.Value = _project.Generator.ClipCount
+            minClipUpDown.Value = _project.Generator.MinClipSeconds
+            maxClipUpDown.Value = _project.Generator.MaxClipSeconds
+            beatSyncCheck.Checked = _project.Generator.EnableBeatSync
+            seedUpDown.Value = _project.Generator.ShuffleSeed
+        End Sub
+
+        Private Sub AddHandlerByType(ctrl As Control)
+            If TypeOf ctrl Is TextBox Then
+                AddHandler DirectCast(ctrl, TextBox).TextChanged, AddressOf OnAnySettingChanged
+            ElseIf TypeOf ctrl Is ComboBox Then
+                AddHandler DirectCast(ctrl, ComboBox).SelectedIndexChanged, AddressOf OnAnySettingChanged
+            ElseIf TypeOf ctrl Is NumericUpDown Then
+                AddHandler DirectCast(ctrl, NumericUpDown).ValueChanged, AddressOf OnAnySettingChanged
+            ElseIf TypeOf ctrl Is CheckBox Then
+                AddHandler DirectCast(ctrl, CheckBox).CheckedChanged, AddressOf OnAnySettingChanged
+            End If
+        End Sub
+
+        Private Sub OnAnySettingChanged(sender As Object, e As EventArgs)
+            PullUiIntoProject()
+            RefreshAllViews()
+        End Sub
+
+        Private Sub OnEffectsChanged(sender As Object, e As ItemCheckEventArgs)
+            BeginInvoke(New MethodInvoker(AddressOf HandleEffectRefresh))
+        End Sub
+
+        Private Sub HandleEffectRefresh()
+            PullUiIntoProject()
+            RefreshAllViews()
+        End Sub
+
+        Private Sub PullUiIntoProject()
+            _project.ProjectName = projectNameText.Text.Trim()
+            _project.Type = CType(projectTypeCombo.SelectedIndex, ProjectType)
+            _project.Generator.ClipCount = CInt(clipCountUpDown.Value)
+            _project.Generator.MinClipSeconds = CInt(minClipUpDown.Value)
+            _project.Generator.MaxClipSeconds = CInt(maxClipUpDown.Value)
+            _project.Generator.EnableBeatSync = beatSyncCheck.Checked
+            _project.Generator.ShuffleSeed = CInt(seedUpDown.Value)
+            _project.Output.OutputFormat = outputFormatCombo.SelectedItem.ToString()
+            _project.Output.OutputPath = outputPathText.Text.Trim()
+
+            _project.SelectedAudioEffects = audioEffects.CheckedItems.Cast(Of String)().ToList()
+            _project.SelectedVideoEffects = videoEffects.CheckedItems.Cast(Of String)().ToList()
+        End Sub
+
+        Private Sub RefreshAllViews()
+            planPreview.Text = BuildPlanText()
+
+            Dim pipeline As FfmpegPipelineResult = FfmpegGenerator.BuildPipeline(_project, ffmpegPathText.Text)
+            _project.AutoKeyframeData = pipeline.AutoKeyframeData
+            commandPreview.Text = String.Join(Environment.NewLine, pipeline.Commands.ToArray())
+            vegasPreview.Text = VegasAdapter.BuildVegas12Template(_project)
+
+            sourceList.Items.Clear()
+            For Each a As AssetItem In _project.Assets
+                Dim item As New ListViewItem(New String() {a.Path, a.Type.ToString(), a.Tag})
+                sourceList.Items.Add(item)
+            Next
+
+            audioLibraryList.Items.Clear()
+            For Each a As AssetItem In _project.AudioLibrary
+                audioLibraryList.Items.Add(a.Path)
+            Next
+        End Sub
+
+        Private Function BuildPlanText() As String
+            Dim sb As New StringBuilder()
+            sb.AppendLine("=== Nostalgic YTP Generator Plan ===")
+            sb.AppendLine("Project: " & _project.ProjectName)
+            sb.AppendLine("Mode: " & _project.Type.ToString())
+            sb.AppendLine(String.Format("Assets: {0} | Audio Library: {1}", _project.Assets.Count, _project.AudioLibrary.Count))
+            sb.AppendLine(String.Format("Clip Count: {0} ({1}-{2} sec)", _project.Generator.ClipCount, _project.Generator.MinClipSeconds, _project.Generator.MaxClipSeconds))
+            sb.AppendLine("Beat Sync: " & If(_project.Generator.EnableBeatSync, "On", "Off"))
+            sb.AppendLine("Output: " & _project.Output.OutputFormat & " -> " & _project.Output.OutputPath)
+            sb.AppendLine("Audio Effects: " & If(_project.SelectedAudioEffects.Count = 0, "None", String.Join(", ", _project.SelectedAudioEffects.ToArray())))
+            sb.AppendLine("Video Effects: " & If(_project.SelectedVideoEffects.Count = 0, "None", String.Join(", ", _project.SelectedVideoEffects.ToArray())))
+            sb.AppendLine()
+            sb.AppendLine("Workflow: Source Explorer -> Auto/Manual FFmpeg remix -> Vegas 12 keyframe assist")
+            sb.AppendLine("Project Outputs: .ytpproj JSON + concat pipeline + optional final WMV/MP4/AVI/MKV")
+            Return sb.ToString()
+        End Function
+
+        Private Sub BrowseAndBulkAdd(sender As Object, e As EventArgs)
+            Using dlg As New FolderBrowserDialog()
+                If dlg.ShowDialog() = DialogResult.OK Then
+                    sourceFolderText.Text = dlg.SelectedPath
+                    BulkAddFromFolder(dlg.SelectedPath)
                 End If
             End Using
         End Sub
 
-        Private Sub OnLongformModeChanged(sender As Object, e As EventArgs)
-            If longformModeCheck.Checked Then
-                durationTrack.Minimum = 25
-                durationTrack.Maximum = 120
-                If durationTrack.Value < 25 Then
-                    durationTrack.Value = 25
+        Private Sub BulkAddFromFolder(folder As String)
+            Dim extMap As New Dictionary(Of String, AssetType)(StringComparer.OrdinalIgnoreCase)
+            For Each ex As String In New String() {".mp4", ".wmv", ".avi", ".mkv"}
+                extMap(ex) = AssetType.Video
+            Next
+            For Each ex As String In New String() {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+                extMap(ex) = AssetType.Image
+            Next
+            For Each ex As String In New String() {".mp3", ".wav", ".ogg"}
+                extMap(ex) = AssetType.Audio
+            Next
+            For Each ex As String In New String() {".xm", ".mod", ".it"}
+                extMap(ex) = AssetType.Tracker
+            Next
+
+            For Each path As String In Directory.GetFiles(folder)
+                Dim ext As String = Path.GetExtension(path)
+                If extMap.ContainsKey(ext) Then
+                    Dim a As New AssetItem()
+                    a.Path = path
+                    a.Type = extMap(ext)
+                    a.Tag = Path.GetFileNameWithoutExtension(path)
+                    _project.Assets.Add(a)
+                    If a.Type = AssetType.Audio OrElse a.Type = AssetType.Tracker Then
+                        _project.AudioLibrary.Add(a)
+                    End If
                 End If
-                clipTrack.Maximum = 150000
-            Else
-                durationTrack.Minimum = 1
-                durationTrack.Maximum = 45
-                If durationTrack.Value > 45 Then
-                    durationTrack.Value = 25
+            Next
+
+            RefreshAllViews()
+        End Sub
+
+        Private Sub AddFilesManual(sender As Object, e As EventArgs)
+            Using dlg As New OpenFileDialog()
+                dlg.Multiselect = True
+                dlg.Filter = "Media|*.mp4;*.wmv;*.avi;*.mkv;*.png;*.jpg;*.jpeg;*.webp;*.gif;*.mp3;*.wav;*.ogg;*.xm;*.mod;*.it|All files|*.*"
+                If dlg.ShowDialog() = DialogResult.OK Then
+                    For Each p As String In dlg.FileNames
+                        Dim a As New AssetItem()
+                        a.Path = p
+                        a.Tag = Path.GetFileNameWithoutExtension(p)
+                        a.Type = GuessAssetType(p)
+                        _project.Assets.Add(a)
+                        If a.Type = AssetType.Audio OrElse a.Type = AssetType.Tracker Then
+                            _project.AudioLibrary.Add(a)
+                        End If
+                    Next
+                    RefreshAllViews()
                 End If
-                clipTrack.Maximum = 70000
-                If clipTrack.Value > clipTrack.Maximum Then
-                    clipTrack.Value = clipTrack.Maximum
-                End If
-            End If
-
-            UpdateRangeLabels()
-            UpdateAllPreviews()
+            End Using
         End Sub
 
-        Private Sub OnEffectsChanged(sender As Object, e As ItemCheckEventArgs)
-            BeginInvoke(New MethodInvoker(AddressOf UpdateAllPreviews))
-        End Sub
-
-        Private Sub OnParameterChanged(sender As Object, e As EventArgs)
-            UpdateRangeLabels()
-            UpdateAllPreviews()
-        End Sub
-
-        Private Sub UpdateAllPreviews()
-            UpdatePlanPreview()
-            UpdateFfmpegPreview()
-        End Sub
-
-        Private Sub UpdateRangeLabels()
-            durationLabel.Text = String.Format("Stream Duration: {0} minute(s)", durationTrack.Value)
-            clipLabel.Text = String.Format("Clip Count: {0}", clipTrack.Value.ToString("N0"))
-            minClipLabel.Text = String.Format("Min/Max Clip Length: {0} to {1} sec", minClipTrack.Value, Math.Max(minClipTrack.Value + 12, 30))
-        End Sub
-
-        Private Sub UpdatePlanPreview()
-            Dim selectedEffects As String() = effectsChecked.CheckedItems.Cast(Of String)().ToArray()
-            Dim summary As New StringBuilder()
-
-            summary.AppendLine("=== YTP Maker Advanced Plan ===")
-            summary.AppendLine(String.Format("Mode: {0}", If(longformModeCheck.Checked, "Longform", "Standard")))
-            summary.AppendLine(String.Format("Duration Target: {0} minute(s)", durationTrack.Value))
-            summary.AppendLine(String.Format("Clip Count Target: {0}", clipTrack.Value.ToString("N0")))
-            summary.AppendLine(String.Format("Clip Length Window: {0}-{1} seconds", minClipTrack.Value, Math.Max(minClipTrack.Value + 12, 30)))
-            summary.AppendLine(String.Format("Mega YTP: {0}", If(megaYtpCheck.Checked, "Enabled", "Disabled")))
-
-            If adaptiveBeatSyncCheck.Checked Then
-                summary.AppendLine(String.Format("Adaptive Beat Sync: Enabled (Strength {0}/10)", beatSyncStrength.Value))
-            Else
-                summary.AppendLine("Adaptive Beat Sync: Disabled")
-            End If
-
-            summary.AppendLine(String.Format("Cut Intensity Profile: {0}", cutIntensity.SelectedItem))
-            summary.AppendLine(String.Format("Smart Transition Mix: {0}", If(smartTransitionsCheck.Checked, "Enabled", "Disabled")))
-            summary.AppendLine(String.Format("Windows Profile: {0}", windowsCompatCombo.SelectedItem))
-            summary.AppendLine(String.Format("Legacy Codec Safety: {0}", If(legacyCodecCheck.Checked, "Enabled", "Disabled")))
-            summary.AppendLine("Effects: " & If(selectedEffects.Any(), String.Join(", ", selectedEffects), "None"))
-            summary.AppendLine()
-
-            If ffmpegEnabledCheck.Checked Then
-                summary.AppendLine("FFmpeg Pipeline: Enabled")
-                summary.AppendLine(String.Format("Codec Preset: {0}", codecPresetCombo.SelectedItem))
-                summary.AppendLine(String.Format("Audio Normalize: {0}", If(normalizeAudioCheck.Checked, "On", "Off")))
-                summary.AppendLine(String.Format("Two-pass: {0}", If(twoPassCheck.Checked, "On", "Off")))
-                summary.AppendLine(String.Format("Shuffle Seed: {0}", shuffleSeedValue.Value))
-            Else
-                summary.AppendLine("FFmpeg Pipeline: Disabled")
-            End If
-
-            summary.AppendLine("Estimated Render Complexity: " & EstimateComplexity(selectedEffects.Length))
-            planPreview.Text = summary.ToString()
-        End Sub
-
-        Private Sub UpdateFfmpegPreview()
-            ffmpegCommandPreview.Text = BuildFfmpegCommandPreview()
-        End Sub
-
-        Private Function BuildFfmpegCommandPreview() As String
-            If Not ffmpegEnabledCheck.Checked Then
-                Return "FFmpeg pipeline disabled."
-            End If
-
-            Dim chosenProfile As String = windowsCompatCombo.SelectedItem.ToString()
-            Dim codecTokens As String() = codecPresetCombo.SelectedItem.ToString().Split(" "c)
-            Dim codec As String = codecTokens(0)
-            Dim preset As String = If(codecTokens.Length > 1, codecTokens(1), "medium")
-
-            If chosenProfile = "Windows XP" OrElse legacyCodecCheck.Checked Then
-                codec = "mpeg4"
-                preset = ""
-            End If
-
-            Dim filterParts As New List(Of String)()
-            If smartTransitionsCheck.Checked Then
-                filterParts.Add("tblend=all_mode='average':all_opacity=0.15")
-            End If
-            If effectsChecked.CheckedItems.Contains("Invert") Then
-                filterParts.Add("negate")
-            End If
-            If effectsChecked.CheckedItems.Contains("Mirror") Then
-                filterParts.Add("hflip")
-            End If
-            If effectsChecked.CheckedItems.Contains("Rainbow") Then
-                filterParts.Add("hue=s=2")
-            End If
-            If effectsChecked.CheckedItems.Contains("Frame Rate Cuts") Then
-                filterParts.Add("fps=18")
-            End If
-            If adaptiveBeatSyncCheck.Checked Then
-                filterParts.Add(String.Format("setpts=(1/{0})*PTS", Math.Max(1D, CDbl(beatSyncStrength.Value) / 5D).ToString("0.0")))
-            End If
-
-            Dim audioFilterParts As New List(Of String)()
-            If normalizeAudioCheck.Checked Then
-                audioFilterParts.Add("loudnorm")
-            End If
-            If effectsChecked.CheckedItems.Contains("Reverse") Then
-                audioFilterParts.Add("areverse")
-            End If
-            If effectsChecked.CheckedItems.Contains("Pitch Shift") Then
-                audioFilterParts.Add("asetrate=44100*1.12,aresample=44100")
-            End If
-
-            Dim builder As New StringBuilder()
-            builder.Append(ffmpegPathText.Text.Trim())
-            builder.Append(" -y")
-
-            If Not String.IsNullOrWhiteSpace(introClipText.Text) Then
-                builder.Append(" -i ").Append(QuotePath(introClipText.Text.Trim()))
-            End If
-
-            builder.Append(" -i ").Append(QuotePath(If(String.IsNullOrWhiteSpace(inputVideoText.Text), "input.mp4", inputVideoText.Text.Trim())))
-
-            If Not String.IsNullOrWhiteSpace(outroClipText.Text) Then
-                builder.Append(" -i ").Append(QuotePath(outroClipText.Text.Trim()))
-            End If
-
-            If filterParts.Count > 0 Then
-                builder.Append(" -vf ").Append(QuotePath(String.Join(",", filterParts.ToArray())))
-            End If
-
-            If audioFilterParts.Count > 0 Then
-                builder.Append(" -af ").Append(QuotePath(String.Join(",", audioFilterParts.ToArray())))
-            End If
-
-            builder.Append(" -c:v ").Append(codec)
-            If Not String.IsNullOrEmpty(preset) Then
-                builder.Append(" -preset ").Append(preset)
-            End If
-
-            builder.Append(" -pix_fmt yuv420p")
-
-            If chosenProfile = "Windows Vista" OrElse chosenProfile = "Windows 7" OrElse chosenProfile = "Windows 8" OrElse chosenProfile = "Windows 8.1" Then
-                builder.Append(" -profile:v baseline -level 3.0")
-            End If
-
-            If forceSingleThreadCheck.Checked OrElse chosenProfile = "Windows XP" Then
-                builder.Append(" -threads 1")
-            End If
-
-            builder.Append(" -g ").Append(CInt(keyframeSeconds.Value * 30D).ToString())
-            builder.Append(" -metadata ytp_seed=").Append(shuffleSeedValue.Value.ToString())
-
-            If twoPassCheck.Checked Then
-                builder.Append(" -pass 1")
-            End If
-
-            builder.Append(" ").Append(QuotePath(If(String.IsNullOrWhiteSpace(outputVideoText.Text), "output_ytp.mp4", outputVideoText.Text.Trim())))
-            Return builder.ToString()
+        Private Function GuessAssetType(path As String) As AssetType
+            Dim ext As String = Path.GetExtension(path).ToLowerInvariant()
+            If ext = ".mp3" OrElse ext = ".wav" OrElse ext = ".ogg" Then Return AssetType.Audio
+            If ext = ".xm" OrElse ext = ".mod" OrElse ext = ".it" Then Return AssetType.Tracker
+            If ext = ".gif" Then Return AssetType.Gif
+            If ext = ".png" OrElse ext = ".jpg" OrElse ext = ".jpeg" OrElse ext = ".webp" Then Return AssetType.Image
+            Return AssetType.Video
         End Function
 
-        Private Function QuotePath(value As String) As String
-            Return "\"" & value.Replace("\"", String.Empty) & "\""
-        End Function
-
-        Private Function EstimateComplexity(effectCount As Integer) As String
-            Dim score As Integer = effectCount + CInt(Math.Ceiling(durationTrack.Value / 15.0R))
-            If longformModeCheck.Checked Then score += 3
-            If adaptiveBeatSyncCheck.Checked Then score += 2
-            If megaYtpCheck.Checked Then score += 2
-            If ffmpegEnabledCheck.Checked Then score += 3
-            If twoPassCheck.Checked Then score += 2
-            If forceSingleThreadCheck.Checked Then score += 1
-
-            If score <= 6 Then Return "Low"
-            If score <= 11 Then Return "Medium"
-            If score <= 16 Then Return "High"
-            Return "Extreme"
-        End Function
-
-        Private Sub RunFfmpegPrototype(sender As Object, e As EventArgs)
-            If Not ffmpegEnabledCheck.Checked Then
-                MessageBox.Show("Enable FFmpeg pipeline first.", "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        Private Sub ApplyTagToSelected(sender As Object, e As EventArgs)
+            Dim tagVal As String = sourceTagText.Text.Trim()
+            If String.IsNullOrWhiteSpace(tagVal) Then
                 Return
             End If
 
-            Dim inputPath As String = inputVideoText.Text.Trim()
-            If String.IsNullOrWhiteSpace(inputPath) OrElse Not File.Exists(inputPath) Then
-                MessageBox.Show("Select a valid input video file before running FFmpeg.", "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Return
-            End If
+            For Each selected As ListViewItem In sourceList.SelectedItems
+                Dim pathVal As String = selected.SubItems(0).Text
+                For Each a As AssetItem In _project.Assets
+                    If String.Equals(a.Path, pathVal, StringComparison.OrdinalIgnoreCase) Then
+                        a.Tag = tagVal
+                    End If
+                Next
+            Next
+            RefreshAllViews()
+        End Sub
 
-            Dim cmd As String = BuildFfmpegCommandPreview()
-            Try
-                Dim processInfo As New ProcessStartInfo()
-                processInfo.FileName = "cmd.exe"
-                processInfo.Arguments = "/C " & cmd
-                processInfo.UseShellExecute = False
-                processInfo.CreateNoWindow = True
-                Process.Start(processInfo)
-                MessageBox.Show("FFmpeg process started (prototype mode).", "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            Catch ex As Exception
-                MessageBox.Show("Unable to start FFmpeg process: " & ex.Message, "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            End Try
+        Private Sub AddSelectedToAudioLibrary(sender As Object, e As EventArgs)
+            For Each selected As ListViewItem In sourceList.SelectedItems
+                Dim pathVal As String = selected.SubItems(0).Text
+                Dim asset As AssetItem = _project.Assets.FirstOrDefault(Function(a) String.Equals(a.Path, pathVal, StringComparison.OrdinalIgnoreCase))
+                If asset IsNot Nothing Then
+                    If Not _project.AudioLibrary.Any(Function(a) String.Equals(a.Path, asset.Path, StringComparison.OrdinalIgnoreCase)) Then
+                        _project.AudioLibrary.Add(asset)
+                    End If
+                End If
+            Next
+            RefreshAllViews()
+        End Sub
+
+        Private Sub SaveProjectJson(sender As Object, e As EventArgs)
+            PullUiIntoProject()
+            Using dlg As New SaveFileDialog()
+                dlg.Filter = "YTP Project|*.ytpproj|JSON|*.json"
+                dlg.FileName = _project.ProjectName.Replace(" ", "_") & ".ytpproj"
+                If dlg.ShowDialog() = DialogResult.OK Then
+                    ProjectSerializer.SaveProject(dlg.FileName, _project)
+                    MessageBox.Show("Project saved.", "YTP", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End Using
+        End Sub
+
+        Private Sub LoadProjectJson(sender As Object, e As EventArgs)
+            Using dlg As New OpenFileDialog()
+                dlg.Filter = "YTP Project|*.ytpproj;*.json|All|*.*"
+                If dlg.ShowDialog() = DialogResult.OK Then
+                    _project = ProjectSerializer.LoadProject(dlg.FileName)
+                    PushProjectToUi()
+                    RefreshAllViews()
+                End If
+            End Using
+        End Sub
+
+        Private Sub PushProjectToUi()
+            projectNameText.Text = _project.ProjectName
+            projectTypeCombo.SelectedIndex = CInt(_project.Type)
+            outputFormatCombo.SelectedItem = _project.Output.OutputFormat
+            outputPathText.Text = _project.Output.OutputPath
+
+            clipCountUpDown.Value = Math.Max(clipCountUpDown.Minimum, Math.Min(clipCountUpDown.Maximum, _project.Generator.ClipCount))
+            minClipUpDown.Value = Math.Max(minClipUpDown.Minimum, Math.Min(minClipUpDown.Maximum, _project.Generator.MinClipSeconds))
+            maxClipUpDown.Value = Math.Max(maxClipUpDown.Minimum, Math.Min(maxClipUpDown.Maximum, _project.Generator.MaxClipSeconds))
+            seedUpDown.Value = Math.Max(seedUpDown.Minimum, Math.Min(seedUpDown.Maximum, _project.Generator.ShuffleSeed))
+            beatSyncCheck.Checked = _project.Generator.EnableBeatSync
+
+            SetCheckedItems(audioEffects, _project.SelectedAudioEffects)
+            SetCheckedItems(videoEffects, _project.SelectedVideoEffects)
+        End Sub
+
+        Private Sub SetCheckedItems(list As CheckedListBox, selected As List(Of String))
+            For i As Integer = 0 To list.Items.Count - 1
+                Dim name As String = list.Items(i).ToString()
+                list.SetItemChecked(i, selected.Any(Function(s) String.Equals(s, name, StringComparison.OrdinalIgnoreCase)))
+            Next
+        End Sub
+
+        Private Sub ExportPipelineBat(sender As Object, e As EventArgs)
+            PullUiIntoProject()
+            Dim pipeline As FfmpegPipelineResult = FfmpegGenerator.BuildPipeline(_project, ffmpegPathText.Text)
+            Using dlg As New SaveFileDialog()
+                dlg.Filter = "Batch file|*.bat|Text file|*.txt"
+                dlg.FileName = "render_ytp_pipeline.bat"
+                If dlg.ShowDialog() = DialogResult.OK Then
+                    File.WriteAllLines(dlg.FileName, pipeline.Commands.ToArray())
+                    MessageBox.Show("Pipeline batch exported.", "YTP", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End Using
+        End Sub
+
+        Private Sub ExportVegasTemplate(sender As Object, e As EventArgs)
+            PullUiIntoProject()
+            Dim template As String = VegasAdapter.BuildVegas12Template(_project)
+            Using dlg As New SaveFileDialog()
+                dlg.Filter = "Text|*.txt|All|*.*"
+                dlg.FileName = "vegas12_ytp_template.txt"
+                If dlg.ShowDialog() = DialogResult.OK Then
+                    File.WriteAllText(dlg.FileName, template)
+                    MessageBox.Show("Vegas template exported.", "Vegas Adapter", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End Using
+            vegasPreview.Text = template
         End Sub
     End Class
 End Namespace
