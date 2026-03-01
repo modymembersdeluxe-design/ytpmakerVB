@@ -5,7 +5,8 @@ Namespace YTPMakerAdvanced
     Friend Module Program
         <STAThread>
         Friend Sub Main()
-            ApplicationConfiguration.Initialize()
+            Application.EnableVisualStyles()
+            Application.SetCompatibleTextRenderingDefault(False)
             Application.Run(New MainForm())
         End Sub
     End Module

@@ -1,4 +1,5 @@
 Imports System
+Imports System.Collections.Generic
 Imports System.Diagnostics
 Imports System.Drawing
 Imports System.IO
@@ -40,8 +41,12 @@ Namespace YTPMakerAdvanced
         Private ReadOnly normalizeAudioCheck As New CheckBox()
         Private ReadOnly smartTransitionsCheck As New CheckBox()
 
+        Private ReadOnly windowsCompatCombo As New ComboBox()
+        Private ReadOnly legacyCodecCheck As New CheckBox()
+        Private ReadOnly forceSingleThreadCheck As New CheckBox()
+
         Public Sub New()
-            Text = "YTP Maker Advanced - SharpDevelop VB Edition"
+            Text = "YTP Maker Advanced - SharpDevelop VB Edition (Legacy Windows Ready)"
             Size = New Size(1360, 900)
             StartPosition = FormStartPosition.CenterScreen
             BackColor = Color.FromArgb(236, 240, 246)
@@ -53,12 +58,11 @@ Namespace YTPMakerAdvanced
         End Sub
 
         Private Sub BuildUi()
-            Dim root As New TableLayoutPanel() With {
-                .Dock = DockStyle.Fill,
-                .ColumnCount = 3,
-                .RowCount = 2,
-                .Padding = New Padding(12)
-            }
+            Dim root As New TableLayoutPanel()
+            root.Dock = DockStyle.Fill
+            root.ColumnCount = 3
+            root.RowCount = 2
+            root.Padding = New Padding(12)
             root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 30.0F))
             root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 40.0F))
             root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 30.0F))
@@ -74,23 +78,29 @@ Namespace YTPMakerAdvanced
         End Sub
 
         Private Function BuildLeftPanel() As Control
-            Dim container As New GroupBox() With {
-                .Dock = DockStyle.Fill,
-                .Text = "Video & Stream Settings",
-                .Font = New Font("Segoe UI", 11, FontStyle.Bold)
-            }
+            Dim container As New GroupBox()
+            container.Dock = DockStyle.Fill
+            container.Text = "Video & Stream Settings"
+            container.Font = New Font("Segoe UI", 11, FontStyle.Bold)
 
-            Dim panel As New TableLayoutPanel() With {
-                .Dock = DockStyle.Fill,
-                .ColumnCount = 1,
-                .RowCount = 10,
-                .Padding = New Padding(8)
-            }
+            Dim panel As New TableLayoutPanel()
+            panel.Dock = DockStyle.Fill
+            panel.ColumnCount = 1
+            panel.RowCount = 10
+            panel.Padding = New Padding(8)
 
-            Dim importVideo As New Button() With {.Text = "Import Video (MP4/WMV/AVI)", .Dock = DockStyle.Fill, .Height = 40}
-            Dim importImages As New Button() With {.Text = "Import Images (PNG/JPG/WEBP)", .Dock = DockStyle.Fill, .Height = 40}
+            Dim importVideo As New Button()
+            importVideo.Text = "Import Video (MP4/WMV/AVI/MKV)"
+            importVideo.Dock = DockStyle.Fill
+            importVideo.Height = 40
+
+            Dim importImages As New Button()
+            importImages.Text = "Import Images (PNG/JPG/BMP)"
+            importImages.Dock = DockStyle.Fill
+            importImages.Height = 40
+
             AddHandler importVideo.Click, AddressOf SelectInputVideo
-            AddHandler importImages.Click, Sub() MessageBox.Show("Image import hook ready.", "Import", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            AddHandler importImages.Click, Sub(sender, e) MessageBox.Show("Image import hook ready.", "Import", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
             durationTrack.Minimum = 1
             durationTrack.Maximum = 120
@@ -123,7 +133,7 @@ Namespace YTPMakerAdvanced
             panel.Controls.Add(minClipLabel)
             panel.Controls.Add(minClipTrack)
 
-            longformModeCheck.Text = "Longform Mode (New): 25 to 120 minutes"
+            longformModeCheck.Text = "Longform Mode: 25 to 120 minutes"
             longformModeCheck.Font = New Font("Segoe UI", 10, FontStyle.Bold)
             AddHandler longformModeCheck.CheckedChanged, AddressOf OnLongformModeChanged
             panel.Controls.Add(longformModeCheck)
@@ -133,41 +143,37 @@ Namespace YTPMakerAdvanced
         End Function
 
         Private Function BuildCenterPanel() As Control
-            Dim container As New GroupBox() With {
-                .Dock = DockStyle.Fill,
-                .Text = "Video Preview / Generation Plan",
-                .Font = New Font("Segoe UI", 11, FontStyle.Bold)
-            }
+            Dim container As New GroupBox()
+            container.Dock = DockStyle.Fill
+            container.Text = "Preview / Generation Plan"
+            container.Font = New Font("Segoe UI", 11, FontStyle.Bold)
 
-            Dim panel As New TableLayoutPanel() With {
-                .Dock = DockStyle.Fill,
-                .ColumnCount = 1,
-                .RowCount = 5,
-                .Padding = New Padding(8)
-            }
-            panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 270))
+            Dim panel As New TableLayoutPanel()
+            panel.Dock = DockStyle.Fill
+            panel.ColumnCount = 1
+            panel.RowCount = 5
+            panel.Padding = New Padding(8)
+            panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 260))
             panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 24))
             panel.RowStyles.Add(New RowStyle(SizeType.Percent, 50))
             panel.RowStyles.Add(New RowStyle(SizeType.Absolute, 24))
             panel.RowStyles.Add(New RowStyle(SizeType.Percent, 50))
 
-            Dim preview As New Panel() With {
-                .Dock = DockStyle.Fill,
-                .BackColor = Color.Black
-            }
-            Dim previewLabel As New Label() With {
-                .Dock = DockStyle.Fill,
-                .Text = "Preview Placeholder (connect render engine here)",
-                .ForeColor = Color.White,
-                .TextAlign = ContentAlignment.MiddleCenter
-            }
+            Dim preview As New Panel()
+            preview.Dock = DockStyle.Fill
+            preview.BackColor = Color.Black
+
+            Dim previewLabel As New Label()
+            previewLabel.Dock = DockStyle.Fill
+            previewLabel.Text = "Preview Placeholder (render engine hook)"
+            previewLabel.ForeColor = Color.White
+            previewLabel.TextAlign = ContentAlignment.MiddleCenter
             preview.Controls.Add(previewLabel)
 
-            Dim planTitle As New Label() With {
-                .Text = "Generation Plan",
-                .Dock = DockStyle.Fill,
-                .Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            }
+            Dim planTitle As New Label()
+            planTitle.Text = "Generation Plan"
+            planTitle.Dock = DockStyle.Fill
+            planTitle.Font = New Font("Segoe UI", 10, FontStyle.Bold)
 
             planPreview.Multiline = True
             planPreview.ScrollBars = ScrollBars.Vertical
@@ -175,11 +181,10 @@ Namespace YTPMakerAdvanced
             planPreview.Dock = DockStyle.Fill
             planPreview.Font = New Font("Consolas", 10)
 
-            Dim ffmpegTitle As New Label() With {
-                .Text = "Generated FFmpeg Command",
-                .Dock = DockStyle.Fill,
-                .Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            }
+            Dim ffmpegTitle As New Label()
+            ffmpegTitle.Text = "Generated FFmpeg Command"
+            ffmpegTitle.Dock = DockStyle.Fill
+            ffmpegTitle.Font = New Font("Segoe UI", 10, FontStyle.Bold)
 
             ffmpegCommandPreview.Multiline = True
             ffmpegCommandPreview.ScrollBars = ScrollBars.Vertical
@@ -198,18 +203,16 @@ Namespace YTPMakerAdvanced
         End Function
 
         Private Function BuildRightPanel() As Control
-            Dim container As New GroupBox() With {
-                .Dock = DockStyle.Fill,
-                .Text = "Advanced Processing + FFmpeg Pipeline",
-                .Font = New Font("Segoe UI", 11, FontStyle.Bold)
-            }
+            Dim container As New GroupBox()
+            container.Dock = DockStyle.Fill
+            container.Text = "Advanced + FFmpeg + Legacy Windows"
+            container.Font = New Font("Segoe UI", 11, FontStyle.Bold)
 
-            Dim panel As New TableLayoutPanel() With {
-                .Dock = DockStyle.Fill,
-                .ColumnCount = 1,
-                .Padding = New Padding(8),
-                .AutoScroll = True
-            }
+            Dim panel As New TableLayoutPanel()
+            panel.Dock = DockStyle.Fill
+            panel.ColumnCount = 1
+            panel.Padding = New Padding(8)
+            panel.AutoScroll = True
 
             megaYtpCheck.Text = "Mega YTP Mode"
             megaYtpCheck.Checked = True
@@ -217,12 +220,16 @@ Namespace YTPMakerAdvanced
             adaptiveBeatSyncCheck.Text = "Adaptive Beat Sync"
             adaptiveBeatSyncCheck.Checked = True
 
-            Dim beatStrengthLabel As New Label() With {.Text = "Beat Sync Strength (1-10):", .AutoSize = True}
+            Dim beatStrengthLabel As New Label()
+            beatStrengthLabel.Text = "Beat Sync Strength (1-10):"
+            beatStrengthLabel.AutoSize = True
             beatSyncStrength.Minimum = 1
             beatSyncStrength.Maximum = 10
             beatSyncStrength.Value = 7
 
-            Dim cutLabel As New Label() With {.Text = "Cut Intensity:", .AutoSize = True}
+            Dim cutLabel As New Label()
+            cutLabel.Text = "Cut Intensity:"
+            cutLabel.AutoSize = True
             cutIntensity.DropDownStyle = ComboBoxStyle.DropDownList
             cutIntensity.Items.AddRange(New Object() {"Balanced", "Chaotic", "Ultra-chaotic", "Story-biased"})
             cutIntensity.SelectedIndex = 0
@@ -236,14 +243,10 @@ Namespace YTPMakerAdvanced
             effectsChecked.Height = 220
             effectsChecked.Dock = DockStyle.Fill
 
-            ffmpegEnabledCheck.Text = "Enable FFmpeg Render Pipeline (New)"
+            ffmpegEnabledCheck.Text = "Enable FFmpeg Render Pipeline"
             ffmpegEnabledCheck.Checked = True
 
             ffmpegPathText.Text = "ffmpeg"
-            inputVideoText.PlaceholderText = "Input video path"
-            outputVideoText.PlaceholderText = "Output video path"
-            introClipText.PlaceholderText = "Optional intro clip path"
-            outroClipText.PlaceholderText = "Optional outro clip path"
             outputVideoText.Text = "output_ytp.mp4"
 
             codecPresetCombo.DropDownStyle = ComboBoxStyle.DropDownList
@@ -251,6 +254,12 @@ Namespace YTPMakerAdvanced
                 "libx264 veryfast", "libx264 medium", "libx265 medium", "mpeg4 fast"
             })
             codecPresetCombo.SelectedIndex = 0
+
+            windowsCompatCombo.DropDownStyle = ComboBoxStyle.DropDownList
+            windowsCompatCombo.Items.AddRange(New Object() {
+                "Auto (Modern)", "Windows XP", "Windows Vista", "Windows 7", "Windows 8", "Windows 8.1"
+            })
+            windowsCompatCombo.SelectedIndex = 0
 
             keyframeSeconds.Minimum = 1
             keyframeSeconds.Maximum = 10
@@ -265,6 +274,9 @@ Namespace YTPMakerAdvanced
             smartTransitionsCheck.Text = "Smart Transition Mix"
             smartTransitionsCheck.Checked = True
 
+            legacyCodecCheck.Text = "Legacy Playback Safe Codec"
+            forceSingleThreadCheck.Text = "Force Single Thread (Old PC Safe)"
+
             AddHandler megaYtpCheck.CheckedChanged, AddressOf OnParameterChanged
             AddHandler adaptiveBeatSyncCheck.CheckedChanged, AddressOf OnParameterChanged
             AddHandler beatSyncStrength.ValueChanged, AddressOf OnParameterChanged
@@ -278,11 +290,14 @@ Namespace YTPMakerAdvanced
             AddHandler introClipText.TextChanged, AddressOf OnParameterChanged
             AddHandler outroClipText.TextChanged, AddressOf OnParameterChanged
             AddHandler codecPresetCombo.SelectedIndexChanged, AddressOf OnParameterChanged
+            AddHandler windowsCompatCombo.SelectedIndexChanged, AddressOf OnParameterChanged
             AddHandler keyframeSeconds.ValueChanged, AddressOf OnParameterChanged
             AddHandler shuffleSeedValue.ValueChanged, AddressOf OnParameterChanged
             AddHandler twoPassCheck.CheckedChanged, AddressOf OnParameterChanged
             AddHandler normalizeAudioCheck.CheckedChanged, AddressOf OnParameterChanged
             AddHandler smartTransitionsCheck.CheckedChanged, AddressOf OnParameterChanged
+            AddHandler legacyCodecCheck.CheckedChanged, AddressOf OnParameterChanged
+            AddHandler forceSingleThreadCheck.CheckedChanged, AddressOf OnParameterChanged
 
             panel.Controls.Add(megaYtpCheck)
             panel.Controls.Add(adaptiveBeatSyncCheck)
@@ -292,17 +307,22 @@ Namespace YTPMakerAdvanced
             panel.Controls.Add(cutIntensity)
             panel.Controls.Add(New Label() With {.Text = "Effects:", .AutoSize = True})
             panel.Controls.Add(effectsChecked)
-            panel.Controls.Add(New Label() With {.Text = " ", .AutoSize = True})
+
+            panel.Controls.Add(New Label() With {.Text = "Windows target profile:", .AutoSize = True})
+            panel.Controls.Add(windowsCompatCombo)
+            panel.Controls.Add(legacyCodecCheck)
+            panel.Controls.Add(forceSingleThreadCheck)
+
             panel.Controls.Add(ffmpegEnabledCheck)
             panel.Controls.Add(New Label() With {.Text = "FFmpeg executable:", .AutoSize = True})
             panel.Controls.Add(ffmpegPathText)
-            panel.Controls.Add(New Label() With {.Text = "Input video:", .AutoSize = True})
+            panel.Controls.Add(New Label() With {.Text = "Input video path:", .AutoSize = True})
             panel.Controls.Add(inputVideoText)
-            panel.Controls.Add(New Label() With {.Text = "Output video:", .AutoSize = True})
+            panel.Controls.Add(New Label() With {.Text = "Output video path:", .AutoSize = True})
             panel.Controls.Add(outputVideoText)
-            panel.Controls.Add(New Label() With {.Text = "Intro clip (optional):", .AutoSize = True})
+            panel.Controls.Add(New Label() With {.Text = "Intro clip path (optional):", .AutoSize = True})
             panel.Controls.Add(introClipText)
-            panel.Controls.Add(New Label() With {.Text = "Outro clip (optional):", .AutoSize = True})
+            panel.Controls.Add(New Label() With {.Text = "Outro clip path (optional):", .AutoSize = True})
             panel.Controls.Add(outroClipText)
             panel.Controls.Add(New Label() With {.Text = "Video codec preset:", .AutoSize = True})
             panel.Controls.Add(codecPresetCombo)
@@ -319,63 +339,61 @@ Namespace YTPMakerAdvanced
         End Function
 
         Private Function BuildBottomPanel() As Control
-            Dim panel As New FlowLayoutPanel() With {
-                .Dock = DockStyle.Fill,
-                .FlowDirection = FlowDirection.LeftToRight,
-                .Padding = New Padding(8)
-            }
+            Dim panel As New FlowLayoutPanel()
+            panel.Dock = DockStyle.Fill
+            panel.FlowDirection = FlowDirection.LeftToRight
+            panel.Padding = New Padding(8)
 
             Dim quickButtons As String() = {
                 "Add Intro/Outro", "Overlay Memes", "Clip Settings", "Save Template", "Export Video"
             }
 
-            For Each buttonText In quickButtons
-                Dim btn As New Button() With {
-                    .Text = buttonText,
-                    .Width = 165,
-                    .Height = 48,
-                    .Font = New Font("Segoe UI", 10, FontStyle.Bold)
-                }
-                AddHandler btn.Click, Sub() MessageBox.Show($"'{buttonText}' workflow hook is ready.", "Feature", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            For Each buttonText As String In quickButtons
+                Dim btn As New Button()
+                btn.Text = buttonText
+                btn.Width = 165
+                btn.Height = 48
+                btn.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+                AddHandler btn.Click,
+                    Sub(sender, e)
+                        MessageBox.Show(String.Format("'{0}' workflow hook is ready.", buttonText), "Feature", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    End Sub
                 panel.Controls.Add(btn)
             Next
 
-            Dim generateCommandButton As New Button() With {
-                .Text = "Generate FFmpeg Cmd",
-                .Width = 185,
-                .Height = 48,
-                .BackColor = Color.DodgerBlue,
-                .ForeColor = Color.White,
-                .Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            }
+            Dim generateCommandButton As New Button()
+            generateCommandButton.Text = "Generate FFmpeg Cmd"
+            generateCommandButton.Width = 185
+            generateCommandButton.Height = 48
+            generateCommandButton.BackColor = Color.DodgerBlue
+            generateCommandButton.ForeColor = Color.White
+            generateCommandButton.Font = New Font("Segoe UI", 10, FontStyle.Bold)
             AddHandler generateCommandButton.Click,
-                Sub()
+                Sub(sender, e)
                     UpdateFfmpegPreview()
                     MessageBox.Show("FFmpeg command regenerated.", "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 End Sub
             panel.Controls.Add(generateCommandButton)
 
-            Dim runFfmpegButton As New Button() With {
-                .Text = "Run FFmpeg (Prototype)",
-                .Width = 205,
-                .Height = 48,
-                .BackColor = Color.DarkSlateBlue,
-                .ForeColor = Color.White,
-                .Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            }
+            Dim runFfmpegButton As New Button()
+            runFfmpegButton.Text = "Run FFmpeg (Prototype)"
+            runFfmpegButton.Width = 205
+            runFfmpegButton.Height = 48
+            runFfmpegButton.BackColor = Color.DarkSlateBlue
+            runFfmpegButton.ForeColor = Color.White
+            runFfmpegButton.Font = New Font("Segoe UI", 10, FontStyle.Bold)
             AddHandler runFfmpegButton.Click, AddressOf RunFfmpegPrototype
             panel.Controls.Add(runFfmpegButton)
 
-            Dim startButton As New Button() With {
-                .Text = "Start Generation!",
-                .Width = 220,
-                .Height = 48,
-                .BackColor = Color.ForestGreen,
-                .ForeColor = Color.White,
-                .Font = New Font("Segoe UI", 11, FontStyle.Bold)
-            }
+            Dim startButton As New Button()
+            startButton.Text = "Start Generation!"
+            startButton.Width = 220
+            startButton.Height = 48
+            startButton.BackColor = Color.ForestGreen
+            startButton.ForeColor = Color.White
+            startButton.Font = New Font("Segoe UI", 11, FontStyle.Bold)
             AddHandler startButton.Click,
-                Sub()
+                Sub(sender, e)
                     UpdatePlanPreview()
                     UpdateFfmpegPreview()
                     MessageBox.Show("Generation has started based on the current plan.", "YTP Maker Advanced", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -419,8 +437,7 @@ Namespace YTPMakerAdvanced
             End If
 
             UpdateRangeLabels()
-            UpdatePlanPreview()
-            UpdateFfmpegPreview()
+            UpdateAllPreviews()
         End Sub
 
         Private Sub OnEffectsChanged(sender As Object, e As ItemCheckEventArgs)
@@ -429,8 +446,7 @@ Namespace YTPMakerAdvanced
 
         Private Sub OnParameterChanged(sender As Object, e As EventArgs)
             UpdateRangeLabels()
-            UpdatePlanPreview()
-            UpdateFfmpegPreview()
+            UpdateAllPreviews()
         End Sub
 
         Private Sub UpdateAllPreviews()
@@ -439,45 +455,46 @@ Namespace YTPMakerAdvanced
         End Sub
 
         Private Sub UpdateRangeLabels()
-            durationLabel.Text = $"Stream Duration: {durationTrack.Value} minute(s)"
-            clipLabel.Text = $"Clip Count: {clipTrack.Value:N0}"
-            minClipLabel.Text = $"Min/Max Clip Length: {minClipTrack.Value} to {Math.Max(minClipTrack.Value + 12, 30)} sec"
+            durationLabel.Text = String.Format("Stream Duration: {0} minute(s)", durationTrack.Value)
+            clipLabel.Text = String.Format("Clip Count: {0}", clipTrack.Value.ToString("N0"))
+            minClipLabel.Text = String.Format("Min/Max Clip Length: {0} to {1} sec", minClipTrack.Value, Math.Max(minClipTrack.Value + 12, 30))
         End Sub
 
         Private Sub UpdatePlanPreview()
-            Dim selectedEffects = effectsChecked.CheckedItems.Cast(Of String)().ToArray()
+            Dim selectedEffects As String() = effectsChecked.CheckedItems.Cast(Of String)().ToArray()
             Dim summary As New StringBuilder()
 
             summary.AppendLine("=== YTP Maker Advanced Plan ===")
-            summary.AppendLine($"Mode: {If(longformModeCheck.Checked, "Longform", "Standard")}")
-            summary.AppendLine($"Duration Target: {durationTrack.Value} minute(s)")
-            summary.AppendLine($"Clip Count Target: {clipTrack.Value:N0}")
-            summary.AppendLine($"Clip Length Window: {minClipTrack.Value}-{Math.Max(minClipTrack.Value + 12, 30)} seconds")
-            summary.AppendLine($"Mega YTP: {If(megaYtpCheck.Checked, "Enabled", "Disabled")}")
+            summary.AppendLine(String.Format("Mode: {0}", If(longformModeCheck.Checked, "Longform", "Standard")))
+            summary.AppendLine(String.Format("Duration Target: {0} minute(s)", durationTrack.Value))
+            summary.AppendLine(String.Format("Clip Count Target: {0}", clipTrack.Value.ToString("N0")))
+            summary.AppendLine(String.Format("Clip Length Window: {0}-{1} seconds", minClipTrack.Value, Math.Max(minClipTrack.Value + 12, 30)))
+            summary.AppendLine(String.Format("Mega YTP: {0}", If(megaYtpCheck.Checked, "Enabled", "Disabled")))
 
             If adaptiveBeatSyncCheck.Checked Then
-                summary.AppendLine($"Adaptive Beat Sync: Enabled (Strength {beatSyncStrength.Value}/10)")
+                summary.AppendLine(String.Format("Adaptive Beat Sync: Enabled (Strength {0}/10)", beatSyncStrength.Value))
             Else
                 summary.AppendLine("Adaptive Beat Sync: Disabled")
             End If
 
-            summary.AppendLine($"Cut Intensity Profile: {cutIntensity.SelectedItem}")
-            summary.AppendLine($"Smart Transition Mix: {If(smartTransitionsCheck.Checked, "Enabled", "Disabled")}")
+            summary.AppendLine(String.Format("Cut Intensity Profile: {0}", cutIntensity.SelectedItem))
+            summary.AppendLine(String.Format("Smart Transition Mix: {0}", If(smartTransitionsCheck.Checked, "Enabled", "Disabled")))
+            summary.AppendLine(String.Format("Windows Profile: {0}", windowsCompatCombo.SelectedItem))
+            summary.AppendLine(String.Format("Legacy Codec Safety: {0}", If(legacyCodecCheck.Checked, "Enabled", "Disabled")))
             summary.AppendLine("Effects: " & If(selectedEffects.Any(), String.Join(", ", selectedEffects), "None"))
             summary.AppendLine()
 
             If ffmpegEnabledCheck.Checked Then
                 summary.AppendLine("FFmpeg Pipeline: Enabled")
-                summary.AppendLine($"Codec Preset: {codecPresetCombo.SelectedItem}")
-                summary.AppendLine($"Audio Normalize: {If(normalizeAudioCheck.Checked, "On", "Off")}")
-                summary.AppendLine($"Two-pass: {If(twoPassCheck.Checked, "On", "Off")}")
-                summary.AppendLine($"Shuffle Seed: {shuffleSeedValue.Value}")
+                summary.AppendLine(String.Format("Codec Preset: {0}", codecPresetCombo.SelectedItem))
+                summary.AppendLine(String.Format("Audio Normalize: {0}", If(normalizeAudioCheck.Checked, "On", "Off")))
+                summary.AppendLine(String.Format("Two-pass: {0}", If(twoPassCheck.Checked, "On", "Off")))
+                summary.AppendLine(String.Format("Shuffle Seed: {0}", shuffleSeedValue.Value))
             Else
                 summary.AppendLine("FFmpeg Pipeline: Disabled")
             End If
 
             summary.AppendLine("Estimated Render Complexity: " & EstimateComplexity(selectedEffects.Length))
-
             planPreview.Text = summary.ToString()
         End Sub
 
@@ -490,11 +507,17 @@ Namespace YTPMakerAdvanced
                 Return "FFmpeg pipeline disabled."
             End If
 
+            Dim chosenProfile As String = windowsCompatCombo.SelectedItem.ToString()
             Dim codecTokens As String() = codecPresetCombo.SelectedItem.ToString().Split(" "c)
             Dim codec As String = codecTokens(0)
             Dim preset As String = If(codecTokens.Length > 1, codecTokens(1), "medium")
 
-            Dim filterParts As New System.Collections.Generic.List(Of String)()
+            If chosenProfile = "Windows XP" OrElse legacyCodecCheck.Checked Then
+                codec = "mpeg4"
+                preset = ""
+            End If
+
+            Dim filterParts As New List(Of String)()
             If smartTransitionsCheck.Checked Then
                 filterParts.Add("tblend=all_mode='average':all_opacity=0.15")
             End If
@@ -511,10 +534,10 @@ Namespace YTPMakerAdvanced
                 filterParts.Add("fps=18")
             End If
             If adaptiveBeatSyncCheck.Checked Then
-                filterParts.Add($"setpts=(1/{Math.Max(1D, CDbl(beatSyncStrength.Value) / 5D)})*PTS")
+                filterParts.Add(String.Format("setpts=(1/{0})*PTS", Math.Max(1D, CDbl(beatSyncStrength.Value) / 5D).ToString("0.0")))
             End If
 
-            Dim audioFilterParts As New System.Collections.Generic.List(Of String)()
+            Dim audioFilterParts As New List(Of String)()
             If normalizeAudioCheck.Checked Then
                 audioFilterParts.Add("loudnorm")
             End If
@@ -540,22 +563,33 @@ Namespace YTPMakerAdvanced
             End If
 
             If filterParts.Count > 0 Then
-                builder.Append(" -vf ").Append(QuotePath(String.Join(",", filterParts)))
+                builder.Append(" -vf ").Append(QuotePath(String.Join(",", filterParts.ToArray())))
             End If
 
             If audioFilterParts.Count > 0 Then
-                builder.Append(" -af ").Append(QuotePath(String.Join(",", audioFilterParts)))
+                builder.Append(" -af ").Append(QuotePath(String.Join(",", audioFilterParts.ToArray())))
             End If
 
             builder.Append(" -c:v ").Append(codec)
-            builder.Append(" -preset ").Append(preset)
+            If Not String.IsNullOrEmpty(preset) Then
+                builder.Append(" -preset ").Append(preset)
+            End If
+
+            builder.Append(" -pix_fmt yuv420p")
+
+            If chosenProfile = "Windows Vista" OrElse chosenProfile = "Windows 7" OrElse chosenProfile = "Windows 8" OrElse chosenProfile = "Windows 8.1" Then
+                builder.Append(" -profile:v baseline -level 3.0")
+            End If
+
+            If forceSingleThreadCheck.Checked OrElse chosenProfile = "Windows XP" Then
+                builder.Append(" -threads 1")
+            End If
+
             builder.Append(" -g ").Append(CInt(keyframeSeconds.Value * 30D).ToString())
             builder.Append(" -metadata ytp_seed=").Append(shuffleSeedValue.Value.ToString())
 
             If twoPassCheck.Checked Then
-                builder.AppendLine("  # pass 1")
-                builder.AppendLine(builder.ToString() & " -pass 1 -f mp4 NUL")
-                builder.Append("# pass 2 ").Append(builder.ToString()).Append(" -pass 2")
+                builder.Append(" -pass 1")
             End If
 
             builder.Append(" ").Append(QuotePath(If(String.IsNullOrWhiteSpace(outputVideoText.Text), "output_ytp.mp4", outputVideoText.Text.Trim())))
@@ -563,35 +597,21 @@ Namespace YTPMakerAdvanced
         End Function
 
         Private Function QuotePath(value As String) As String
-            Return "\"" & value.Replace("\"", "") & "\""
+            Return "\"" & value.Replace("\"", String.Empty) & "\""
         End Function
 
         Private Function EstimateComplexity(effectCount As Integer) As String
             Dim score As Integer = effectCount + CInt(Math.Ceiling(durationTrack.Value / 15.0R))
-            If longformModeCheck.Checked Then
-                score += 3
-            End If
-            If adaptiveBeatSyncCheck.Checked Then
-                score += 2
-            End If
-            If megaYtpCheck.Checked Then
-                score += 2
-            End If
-            If ffmpegEnabledCheck.Checked Then
-                score += 3
-            End If
-            If twoPassCheck.Checked Then
-                score += 2
-            End If
+            If longformModeCheck.Checked Then score += 3
+            If adaptiveBeatSyncCheck.Checked Then score += 2
+            If megaYtpCheck.Checked Then score += 2
+            If ffmpegEnabledCheck.Checked Then score += 3
+            If twoPassCheck.Checked Then score += 2
+            If forceSingleThreadCheck.Checked Then score += 1
 
-            If score <= 6 Then
-                Return "Low"
-            ElseIf score <= 11 Then
-                Return "Medium"
-            ElseIf score <= 16 Then
-                Return "High"
-            End If
-
+            If score <= 6 Then Return "Low"
+            If score <= 11 Then Return "Medium"
+            If score <= 16 Then Return "High"
             Return "Extreme"
         End Function
 
@@ -614,7 +634,6 @@ Namespace YTPMakerAdvanced
                 processInfo.Arguments = "/C " & cmd
                 processInfo.UseShellExecute = False
                 processInfo.CreateNoWindow = True
-
                 Process.Start(processInfo)
                 MessageBox.Show("FFmpeg process started (prototype mode).", "FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Catch ex As Exception
