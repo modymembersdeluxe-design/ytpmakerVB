@@ -12,11 +12,11 @@
     <OptionStrict>On</OptionStrict>
     <OptionInfer>On</OptionInfer>
     <MyType>WindowsForms</MyType>
-    <StartupObject>YTPMakerAdvanced.Program.Main</StartupObject>
+    <StartupObject>YTPMakerAdvanced.Program</StartupObject>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <DefineDebug>true</DefineDebug>
@@ -26,7 +26,7 @@
     <NoWarn>42016,41999,42017,42018,42019,42032,42036</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <DefineDebug>false</DefineDebug>
     <DefineTrace>true</DefineTrace>
