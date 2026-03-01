@@ -447,12 +447,12 @@ Namespace YTPMakerAdvanced
             Next
 
             For Each path As String In Directory.GetFiles(folder)
-                Dim ext As String = Path.GetExtension(path)
+                Dim ext As String = System.IO.Path.GetExtension(path)
                 If extMap.ContainsKey(ext) Then
                     Dim a As New AssetItem()
                     a.Path = path
                     a.Type = extMap(ext)
-                    a.Tag = Path.GetFileNameWithoutExtension(path)
+                    a.Tag = System.IO.Path.GetFileNameWithoutExtension(path)
                     _project.Assets.Add(a)
                     If a.Type = AssetType.Audio OrElse a.Type = AssetType.Tracker Then
                         _project.AudioLibrary.Add(a)
@@ -471,7 +471,7 @@ Namespace YTPMakerAdvanced
                     For Each p As String In dlg.FileNames
                         Dim a As New AssetItem()
                         a.Path = p
-                        a.Tag = Path.GetFileNameWithoutExtension(p)
+                        a.Tag = System.IO.Path.GetFileNameWithoutExtension(p)
                         a.Type = GuessAssetType(p)
                         _project.Assets.Add(a)
                         If a.Type = AssetType.Audio OrElse a.Type = AssetType.Tracker Then
@@ -484,7 +484,7 @@ Namespace YTPMakerAdvanced
         End Sub
 
         Private Function GuessAssetType(path As String) As AssetType
-            Dim ext As String = Path.GetExtension(path).ToLowerInvariant()
+            Dim ext As String = System.IO.Path.GetExtension(path).ToLowerInvariant()
             If ext = ".mp3" OrElse ext = ".wav" OrElse ext = ".ogg" Then Return AssetType.Audio
             If ext = ".xm" OrElse ext = ".mod" OrElse ext = ".it" Then Return AssetType.Tracker
             If ext = ".gif" Then Return AssetType.Gif

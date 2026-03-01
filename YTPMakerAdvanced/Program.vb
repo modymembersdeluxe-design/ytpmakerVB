@@ -2,9 +2,9 @@ Imports System
 Imports System.Windows.Forms
 
 Namespace YTPMakerAdvanced
-    Friend Module Program
+    Public Module Program
         <STAThread>
-        Friend Sub Main()
+        Public Sub Main()
             Application.EnableVisualStyles()
             Application.SetCompatibleTextRenderingDefault(False)
             Application.Run(New MainForm())

@@ -34,7 +34,7 @@ Namespace YTPMakerAdvanced
                 tempDir = "temp_clips"
             End If
 
-            result.Commands.Add(String.Format("mkdir \"{0}\"", tempDir))
+            result.Commands.Add(String.Format("mkdir ""{0}""", tempDir))
             Dim maxClips As Integer = Math.Min(project.Generator.ClipCount, project.Assets.Count)
 
             For i As Integer = 0 To maxClips - 1
@@ -56,7 +56,7 @@ Namespace YTPMakerAdvanced
                 cmd.Append(" -c:v libx264 -pix_fmt yuv420p ").Append(Quote(outClip))
                 result.Commands.Add(cmd.ToString())
 
-                result.AutoKeyframeData.Add(String.Format("clip={0};asset={1};effectCount={2}", i, Path.GetFileName(asset.Path), project.SelectedVideoEffects.Count + project.SelectedAudioEffects.Count))
+                result.AutoKeyframeData.Add(String.Format("clip={0};asset={1};effectCount={2}", i, System.IO.Path.GetFileName(asset.Path), project.SelectedVideoEffects.Count + project.SelectedAudioEffects.Count))
             Next
 
             Dim concatPath As String = String.Format("{0}\concat_list.txt", tempDir)
@@ -91,16 +91,16 @@ Namespace YTPMakerAdvanced
             Return String.Join(",", f.ToArray())
         End Function
 
-        Private Shared Function FinalizeOutputName(path As String, formatName As String) As String
+        Private Shared Function FinalizeOutputName(filePath As String, formatName As String) As String
             Dim ext As String = formatName.ToLowerInvariant()
             If ext = "mp4" OrElse ext = "wmv" OrElse ext = "avi" OrElse ext = "mkv" Then
-                Return Path.ChangeExtension(path, ext)
+                Return System.IO.Path.ChangeExtension(filePath, ext)
             End If
-            Return path
+            Return filePath
         End Function
 
         Private Shared Function Quote(value As String) As String
-            Return "\"" & value.Replace("\"", "") & "\""
+            Return """" & value.Replace("""", String.Empty) & """"
         End Function
     End Class
 End Namespace
